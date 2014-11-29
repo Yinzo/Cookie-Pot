@@ -48,8 +48,14 @@ function logIn(logContent){ //写入日志并输出控制台
 
 
 
-function start(route) {
-	var Website_port = 8081;	//网站所在端口号。
+function start(route,port) {
+	//TODO 端口被占用的异常的提示。
+	if (isNaN(parseInt(port)))
+	{
+		console.log("请输入正确的端口号！");
+		return;
+	}
+	var Website_port = parseInt(port);	//网站所在端口号。
 
 	function onRequest(request, response) {
 		var resContent = "";
