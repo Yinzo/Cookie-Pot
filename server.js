@@ -19,8 +19,27 @@ function formatDate(date, style){
 };
 
 function logIn(logContent){ //写入日志并输出控制台
-	//TODO判断Log文件夹是否存在
-	logFileName = "./Log/"+formatDate(new Date,"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt
+
+	LogExist = false;
+	files = fs.readdirSync("./");
+	for (eachfile in files)
+	{
+		if(files[eachfile] == "Log")
+		{
+			LogExist = true;
+			break;
+		}
+	}
+	if (!LogExist)
+	{
+		fs.mkdirSync("Log",function (err){
+			if(err) throw err;
+		});
+	}
+	
+
+	logContent = "\n"+logContent;
+	logFileName = "Log/"+formatDate(new Date,"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt
 	fs.appendFile(logFileName,logContent, "utf-8" , function (err){
 		if (err) throw err;
 		console.log(logContent);
