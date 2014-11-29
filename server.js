@@ -4,18 +4,18 @@ var url = require('url');
 var querystring = require('querystring');
 
 function formatDate(date, style){   
-      var y = date.getFullYear();
-      var M = "0" + (date.getMonth() + 1);
-      M = M.substring(M.length - 2);
-      var d = "0" + date.getDate();
-      d = d.substring(d.length - 2);
-      var h = "0" + date.getHours();
-      h = h.substring(h.length - 2);
-      var m = "0" + date.getMinutes();
-      m = m.substring(m.length - 2);
-      var s = "0" + date.getSeconds();
-      s = s.substring(s.length - 2);
-      return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
+	var y = date.getFullYear();
+	var M = "0" + (date.getMonth() + 1);
+	M = M.substring(M.length - 2);
+	var d = "0" + date.getDate();
+	d = d.substring(d.length - 2);
+	var h = "0" + date.getHours();
+	h = h.substring(h.length - 2);
+	var m = "0" + date.getMinutes();
+	m = m.substring(m.length - 2);
+	var s = "0" + date.getSeconds();
+	s = s.substring(s.length - 2);
+	return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
 };
 
 
@@ -62,9 +62,9 @@ function start(route) {
 
 	function getClientIp(req) {
 		return req.headers['x-forwarded-for'] ||
-        req.connection.remoteAddress ||
-        req.socket.remoteAddress ||
-        req.connection.socket.remoteAddress;
+		req.connection.remoteAddress ||
+		req.socket.remoteAddress ||
+		req.connection.socket.remoteAddress;
     };
 
 
