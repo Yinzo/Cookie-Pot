@@ -61,16 +61,19 @@ function CheckXSSjs(jsfile){
 	}
 	if (!JsExist)
 	{
-		console.log("用于XSS的JS文件不存在.请检查"+jsfile+"文件是否存在于根目录下.")；
+		console.log("用于XSS的JS文件不存在.请检查"+jsfile+"文件是否存在于根目录下.");
 	}
 }
 
 
 
 function start(route,port) {
+	var ErrorOccur = false;
+
+
 	CheckXSSjs();
 
-	//TODO 端口被占用的异常的提示。 "端口输入有误或端口被占用！"
+
 	if (isNaN(parseInt(port)))
 	{
 		console.log("请输入正确的端口号！");
@@ -136,9 +139,16 @@ function start(route,port) {
 
 	
 	}
+	http.createServer(onRequest).listen(Website_port,function (err){
+		logIn(formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + ' | Server started.Running at http://127.0.0.1:'+Website_port+'/');
+	})
 
-	http.createServer(onRequest).listen(Website_port);
-	logIn(formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + ' | Server started.Running at http://127.0.0.1:'+Website_port+'/');
+	.on('error', function(err) {
+		ErrorOccur = true;
+		console.log("服务器启动失败！可能是端口输入有误或端口被占用!\n"+err);
+	});
+
+
 }
 
 exports.start = start;
