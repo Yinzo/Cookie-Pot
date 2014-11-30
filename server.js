@@ -20,8 +20,8 @@ function formatDate(date, style){
 
 function logIn(logContent){ //写入日志并输出控制台
 
-	LogExist = false;
-	files = fs.readdirSync("./");
+	var LogExist = false;
+	var files = fs.readdirSync("./");
 	for (eachfile in files)
 	{
 		if(files[eachfile] == "Log")
@@ -47,9 +47,30 @@ function logIn(logContent){ //写入日志并输出控制台
 };
 
 
+function CheckXSSjs(jsfile){
+	if(!arguments[0]) jsfile = "xss.js";
+	var JsExist = false;
+	var files = fs.readdirSync("./");
+	for (eachfile in files)
+	{
+		if(files[eachfile] == jsfile)
+		{
+			JsExist = true;
+			break;
+		}
+	}
+	if (!JsExist)
+	{
+		console.log("用于XSS的JS文件不存在.请检查"+jsfile+"文件是否存在于根目录下.")；
+	}
+}
+
+
 
 function start(route,port) {
-	//TODO 端口被占用的异常的提示。
+	CheckXSSjs();
+
+	//TODO 端口被占用的异常的提示。 "端口输入有误或端口被占用！"
 	if (isNaN(parseInt(port)))
 	{
 		console.log("请输入正确的端口号！");
