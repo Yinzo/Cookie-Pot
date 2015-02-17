@@ -20,15 +20,20 @@ function formatDate(date, style) {
 	return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
 }
 
-function logIn(logContent){ //写入日志并输出控制台
-
+function folderCheck(){
 	var LogExist = false;
+	var CookiesFolder = false;
 	var files = fs.readdirSync("./");
 	for (var eachfile in files)
 	{
 		if(files[eachfile] == "Log")
 		{
 			LogExist = true;
+			break;
+		}
+		if(files[eachfile] == "Cookies")
+		{
+			CookiesFolder = true;
 			break;
 		}
 	}
@@ -38,7 +43,18 @@ function logIn(logContent){ //写入日志并输出控制台
 			if(err) throw err;
 		});
 	}
+	if (!CookiesFolder)
+	{
+		fs.mkdirSync("Cookies",function (err){
+			if(err) throw err;
+		});
+	}
+}
+
+function logIn(logContent){ //写入日志并输出控制台
+
 	
+	folderCheck();
 
 	logContent = "\n"+logContent;
 	logFileName = "Log/"+formatDate(new Date(),"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt

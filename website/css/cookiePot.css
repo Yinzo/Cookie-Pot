@@ -1,0 +1,4 @@
+.c_inner_content,.c_inner_url {
+    max-width: 200px;
+    overflow-wrap: break-word;
+}

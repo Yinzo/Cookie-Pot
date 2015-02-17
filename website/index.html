@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cookie Pot!</title>
+    <script src="jquery.min.js"></script>
+    <script src="angular.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="css/cookiePot.css" rel="stylesheet">
+</head>
+<body>
+    <div data-ng-app="cookiePot" data-ng-controller="cpcontroller" class="container">
+        <div class="tab col-md-12" style="width:100%;height:250px">
+            <button ng-click="refresh()">Refresh</button>
+            <ul class= "nav nav-tabs" role="tablist">
+                <li data-ng-repeat="type in cookieType" role="presentation" id="tab_{{ type.name }}" onmouseover="bindTab();"><a href="javascript:;">{{ type.name }}</a></li>
+            </ul>
+            <div data-ng-repeat="type in cookieType" title="{{ type.name }}({{ type.cookies.length }})" style="padding:10px" class="col-md-12">
+                <p>Cookie description: {{ type.description }} </p>
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>日期</th><th>来源IP</th><th>内容</th><th>URL</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="ck in type.cookies track by $index">
+                            <td class="c_inner_date">{{ ck.date }}</td>
+                            <td class="c_inner_ip">{{ ck.source }}</td>
+                            <td class="c_inner_content">{{ ck.cookie }}</td>
+                            <td class="c_inner_url">{{ck.refer}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    var app = angular.module("cookiePot",[]);
+    app.controller("cpcontroller", function($scope,$http){
+
+        $scope.cookieType = {
+            "unknown" : {
+                "name":"unknown",
+                "description":"未知cookies",
+                "cookies":[],
+            },
+        }
+
+
+        $scope.refresh = function(){
+            $http.get("http://127.0.0.1:8008/api/typelist.json")
+            .success(function(typeListData){
+                for (var i = 0; i < typeListData.length; i++){
+                    if (typeListData[i] === ".DS_Store") continue;
+                    (function(i) {
+                        if (!$scope.cookieType[typeListData[i]]){
+                            $http.get("http://127.0.0.1:8008/Cookies/"+typeListData[i])
+                            .success(function(cookieData) {
+                                $scope.cookieType[typeListData[i]] = {
+                                    "name":typeListData[i],
+                                    "description":"unknown",
+                                    "cookies":cookieData,
+                                }
+
+                            });
+                        }
+                        else {
+                            $http.get("http://127.0.0.1:8008/Cookies/"+typeListData[i])
+                            .success(function(cookieData) {
+                                $scope.cookieType[typeListData[i]]["cookies"] = cookieData;
+                            });
+                        }
+                    })(i);
+                }
+            });
+        
+
+            
+        };
+
+
+        $scope.tabSwitch = function(target){
+            $("li[role='presentation']").removeClass("active");
+            target.addClass("active");
+        };
+
+
+        $scope.isActive = function(typeName){
+            alert(typeName);
+            return true;
+        }
+    });
+
+
+    $(document).ready(function() {
+        bindTab();
+
+    });
+
+    function bindTab(){
+        $("li[role='presentation']").unbind("click").click(function() {
+            $("li[role='presentation']").removeClass("active");
+            $(this).addClass("active");
+
+            $("div[data-ng-repeat='type in cookieType']").hide(300);
+            var target = $(this).find("a").html();
+            $("div[title^='"+target+"']").show(300);
+        });
+    }
+</script>
+</body>
+</html>
